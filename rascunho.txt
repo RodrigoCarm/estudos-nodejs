@@ -1,0 +1,12 @@
+npm init -y -> INICIAR O NPM NO PROJETO - O "-y" É PARA PULAR QUALQUER PERGUNTA NO PROCESSO DE INSTALAÇÃO
+
+
+#PADRÕES DE IMPORTAÇÃO DE LIBS
+
+// CommonJS => REQUIRE
+// Module => Import http from 'http' -> Padrão de importação mais comum
+
+
+#INICIANDO UM PROJETO NODE SEM NENHUM FRAMEWORK
+// node nome_arquivo.js
+// node --watch nome_arquivo.js --> DESSA FORMA, O SERVIDOR NODE FICA OBSERVANDO QUALQUER ALTERAÇÃO NO PROJETO E REINICIA AUTOMÁTICAMENTE
