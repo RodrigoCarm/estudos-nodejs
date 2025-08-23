@@ -18,4 +18,4 @@ npm init -y -> INICIAR O NPM NO PROJETO - O "-y" É PARA PULAR QUALQUER PERGUNTA
 // Writable Streams -> Streams responsável por finalizar e liberar dos dados, 'Escrever os dados'.
 // Transfrom Streams -> Seria como o 'service' de módulo, usado para transformar e tratar os dados antes de enviar os dados no formato 'BUFFER' para o 'Writable Streams'
 
-//pipe --> 'encamento'
+//pipe --> 'encanamento'

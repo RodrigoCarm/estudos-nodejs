@@ -1,4 +1,5 @@
 import http from 'node:http'
+import { buffer } from 'node:stream/consumers'
 
 const users = [
         {
@@ -16,7 +17,7 @@ const users = [
         }
     ]
 
-const server = http.createServer((req, res)=> {
+const server =  http.createServer(async (req, res)=> {
     const {method, url, body} = req
 
     if(method === 'GET' && url === '/users'){
@@ -46,6 +47,20 @@ const server = http.createServer((req, res)=> {
 
         return res.end(JSON.stringify(users))
     }
+
+
+    if(method === 'POST' && url === '/users/teste'){
+        
+        const buffer = []
+        for await(const chunk of req){
+            buffer.push(chunk)
+        }
+
+        const body = JSON.parse(Buffer.concat(buffer).toString())
+
+        res.writeHead(201, {'Content-Type': 'application/json'})
+        return res.end(JSON.stringify({message: body}))
+    } 
 
     return res.end('Hello World')
 })
