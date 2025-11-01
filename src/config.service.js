@@ -5,12 +5,13 @@ export class ConfigJson {
     constructor() {
     }
 
-    save_config(data: any) {
+    save_config(data) {
 
         const arquivo = './config.json'
         const dir = path.dirname(arquivo);
         fs.mkdirSync(dir, { recursive: true });
         
+        console.log('Dados do arquivo -> ', data)
         const jsonString = JSON.stringify(data, null, 4);
         const tmpPath = arquivo + '.tmp';
 
@@ -20,7 +21,7 @@ export class ConfigJson {
         return true;
     }
 
-    get_config(): Object {
+    get_config() {
         try{
             const arquivo = './config.json'
             const data = fs.readFileSync(arquivo, 'utf-8');

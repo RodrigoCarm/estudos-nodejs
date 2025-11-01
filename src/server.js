@@ -2,12 +2,13 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import axios from 'axios';
+import { ConfigJson } from './config.service.js';
 
 dotenv.config();
 const app = express();
 app.use(express.json());                          
 app.use(express.urlencoded({ extended: true }));
-
+const config = new ConfigJson();
 
 function get_dados_env(){
     return {
@@ -31,7 +32,6 @@ app.post('/acess_token', async(req, res) => {
         redirect_uri: dados_env.URI_REDIRECT,
       });
       
-
     try{ 
         const response = await axios.post(
             'https://api.mercadolibre.com/oauth/token',
@@ -43,6 +43,12 @@ app.post('/acess_token', async(req, res) => {
                 }
             }
         );
+
+        config.save_config({
+            access_token: response.data.access_token,
+            user_id: response.data.user_id,
+            refresh_token: response.data.refresh_token
+        })
 
         return res.json({
             message: 'Access token salvo!',
@@ -82,7 +88,10 @@ app.post('/acess_token/refresh_token', async(req, res) => {
             }
         );
 
-
+        return res.json({
+            message: 'Access token atualizado!',
+            data: response.data
+        });
     }
     catch (err) {
         if (err.response) {
@@ -97,9 +106,13 @@ app.post('/acess_token/refresh_token', async(req, res) => {
 
 app.get('/code', async(req, res) => {
     const url_auth = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${process.env.APP_ID}&redirect_uri=${process.env.URI_REDIRECT}`
+    
     console.log('OLHA A URL --> ', url_auth)
     const response = await axios.get(url_auth)
-    return res.send('Segue resposta do servidor -> ', url_auth)
+    return res.json({
+        message: 'URL de autenticação gerada!',
+        data: response.url_auth
+    });
 })
 
 app.listen(process.env.PORT_APP, () => {
