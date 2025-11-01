@@ -1,68 +1,107 @@
-import http from 'node:http'
-import { buffer } from 'node:stream/consumers'
 
-const users = [
-        {
-            user_id: 1,
-            name: 'John Doe',
-            email: 'john.doe@example.com'
-        }, {
-            user_id: 2,
-            name: 'Jane Snow',
-            email: 'jane.snow@example.com'
-        }, {
-            user_id: 3,
-            name: 'John Puth',
-            email: 'john.puth@example.com'
-        }
-    ]
+import dotenv from 'dotenv';
+import express from 'express';
+import axios from 'axios';
 
-const server =  http.createServer(async (req, res)=> {
-    const {method, url, body} = req
+dotenv.config();
+const app = express();
+app.use(express.json());                          
+app.use(express.urlencoded({ extended: true }));
 
-    if(method === 'GET' && url === '/users'){
-        return res.end(JSON.stringify(users))
+
+function get_dados_env(){
+    return {
+        APP_ID: process.env.APP_ID,
+        URI_REDIRECT: process.env.URI_REDIRECT,
+        REDIRECT_URI: process.env.REDIRECT_URI,
+        CODE: process.env.CODE,
+        SECRET_KEY: process.env.SECRET_KEY,
     }
+}
 
-    if(method === 'POST' && url === '/users'){
-        //VALIDANDO O BODY
-        console.log('OLHA O BODY --> ', body)
-        if (!body) {
-            return res.end(JSON.stringify({ error: 'Body is required' }))
-        }
-        
-        if(!body.name || !body.email){
-            return res.end(JSON.stringify({error: 'Name and email are required'}))
-        }
 
-        const { name, email } = body
+app.post('/acess_token', async(req, res) => {
 
-        //VERIFICANDO O PRÓXIMO ID
-        const lastIdUser = users[users.length - 1]
-        users.push({
-            user_id: lastIdUser.user_id + 1,
-            name: name,
-            email: email
-        })
+    const dados_env = get_dados_env()
+    const body = new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: dados_env.APP_ID,
+        client_secret: dados_env.SECRET_KEY,
+        code: dados_env.CODE,
+        redirect_uri: dados_env.URI_REDIRECT,
+      });
+      
 
-        return res.end(JSON.stringify(users))
+    try{ 
+        const response = await axios.post(
+            'https://api.mercadolibre.com/oauth/token',
+            body.toString(),
+            {
+                headers: {
+                accept: 'application/json',
+                'content-type': 'application/x-www-form-urlencoded'
+                }
+            }
+        );
+
+        return res.json({
+            message: 'Access token salvo!',
+            data: response.data
+        });
     }
-
-
-    if(method === 'POST' && url === '/users/teste'){
-        
-        const buffer = []
-        for await(const chunk of req){
-            buffer.push(chunk)
+    catch (err) {
+        if (err.response) {
+            return res.status(err.response.status).json({
+                erro: 'Falhou ao trocar code por token',
+                detalhe: err.response.data
+            });
         }
-
-        const body = JSON.parse(Buffer.concat(buffer).toString())
-
-        res.writeHead(201, {'Content-Type': 'application/json'})
-        return res.end(JSON.stringify({message: body}))
-    } 
-
-    return res.end('Hello World')
+    }
 })
 
-server.listen(3333)
+
+app.post('/acess_token/refresh_token', async(req, res) => {
+    
+    const dados_env = get_dados_env()
+    const body = new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: dados_env.APP_ID,
+        client_secret: dados_env.SECRET_KEY,
+        refresh_token: dados_env.CODE,
+      });
+
+    try {
+        const response = await axios.post(
+            'https://api.mercadolibre.com/oauth/token',
+            'grant_type=refresh_token&client_id=$APP_ID&client_secret=$SECRET_KEY&refresh_token=$REFRESH_TOKEN',
+            {
+              headers: {
+                'accept': 'application/json',
+                'content-type': 'application/x-www-form-urlencoded'
+              }
+            }
+        );
+
+
+    }
+    catch (err) {
+        if (err.response) {
+            return res.status(err.response.status).json({
+                erro: 'Falhou ao trocar code por token',
+                detalhe: err.response.data
+            });
+        }
+    }
+})  
+
+
+app.get('/code', async(req, res) => {
+    const url_auth = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${process.env.APP_ID}&redirect_uri=${process.env.URI_REDIRECT}`
+    console.log('OLHA A URL --> ', url_auth)
+    const response = await axios.get(url_auth)
+    return res.send('Segue resposta do servidor -> ', url_auth)
+})
+
+app.listen(process.env.PORT_APP, () => {
+    console.log(`Server is running on port ${process.env.PORT_APP}`)
+})
